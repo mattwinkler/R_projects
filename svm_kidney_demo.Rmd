@@ -7,9 +7,9 @@ output: html_document
 
 ### Get the data:
 
-```{r}
-setwd('/Users/mwinkler/Documents/coursework/advanced_data_mining/')
-kidney <- read.csv('kidney.csv')
+```{r, echo = TRUE}
+setwd('/Users/mwinkler/git/personal/arrr/')
+kidney <- read.csv('data/kidney.csv')
 str(kidney)
 
 # Examine the priors:
