@@ -1,0 +1,114 @@
+---
+title: "Ensemble Clustering"
+author: "mwinkler"
+date: "September 30, 2016"
+output: html_document
+---
+
+```{r}
+setwd('/Users/mwinkler/Documents/coursework/advanced_data_mining/')
+cities <- read.csv("cities10k.csv")
+head(cities)
+```
+
+Extract lat & long from the dataset:
+
+```{r}
+loc <- cities[, 6:7]
+plot(loc$Longitude, loc$Latitude, pch = 20, cex=.1)
+```
+
+Create 2 K-means partiitions and plot again:
+
+```{r}
+set.seed(1234)
+clust.k02 <- kmeans(loc, 2)
+plot(loc$Longitude, loc$Latitude, pch = 20, cex=.1, col = clust.k02$cluster)
+```
+
+5 partitions:
+
+```{r}
+set.seed(1234)
+clust.k05 <- kmeans(loc, 5)
+plot(loc$Longitude, loc$Latitude, pch = 20, cex=.1, col = clust.k05$cluster)
+```
+
+10 partitions:
+
+```{r}
+set.seed(1234)
+clust.k10 <- kmeans(loc, 10)
+plot(loc$Longitude, loc$Latitude, pch = 20, cex=.1, col = clust.k10$cluster)
+```
+
+25 partitions:
+
+```{r}
+set.seed(1234)
+clust.k25 <- kmeans(loc, 25)
+plot(loc$Longitude, loc$Latitude, pch = 20, cex=.1, col = clust.k25$cluster)
+```
+
+25 partitions with a different seed:
+
+```{r}
+set.seed(2345)
+clust.k25.2 <- kmeans(loc, 25)
+plot(loc$Longitude, loc$Latitude, pch = 20, cex=.1, col = clust.k25.2$cluster)
+```
+
+25 partitions with yet a different seed:
+
+```{r}
+set.seed(3456)
+clust.k25.2 <- kmeans(loc, 25)
+plot(loc$Longitude, loc$Latitude, pch = 20, cex=.1, col = clust.k25.2$cluster)
+```
+
+### Using "clue" for ensemble clustering:
+
+```{r}
+# install.packages("clue") -- not run
+library(clue)
+help(cl_boot)
+```
+
+
+Create the partitions:
+
+```{r}
+set.seed(3456)
+ensemble <- cl_boot(loc, 50, 25)
+ensemble
+```
+
+Look at agreement between partitionings:
+
+```{r}
+cl_agreement(ensemble)
+```
+
+Aggregate results from 50 partitionings into a single one using a soft consensus approach:
+
+```{r}
+consensus.se <- cl_consensus(ensemble, method = "SE", control = list(k = 25))
+help("cl_consensus")
+consensus.se$.Data[1,]
+
+?cl_consensus
+```
+
+Aggregate again using a hard consensus:
+
+```{r}
+consensus.he <- cl_consensus(ensemble, method = "HE", control = list(k = 25))
+consensus.he$.Data[1, ]
+```
+
+Produce a new set of assignments from the hard consensus, and replot:
+
+```{r}
+assignments <- cl_class_ids(consensus.he)
+plot(loc$Longitude, loc$Latitude, pch = 20, cex = .1, col = assignments)
+```
