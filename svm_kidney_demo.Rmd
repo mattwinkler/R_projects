@@ -1,0 +1,127 @@
+---
+title: "svm_kidney_demo"
+author: "mwinkler"
+date: "October 7, 2016"
+output: html_document
+---
+
+### Get the data:
+
+```{r}
+setwd('/Users/mwinkler/Documents/coursework/advanced_data_mining/')
+kidney <- read.csv('kidney.csv')
+str(kidney)
+
+# Examine the priors:
+prop.table(table(kidney$class))
+
+# summary of the data
+summary(kidney)
+```
+
+### Scatter plots colored by the target variable:
+
+```{r}
+pairs(kidney[, 1:6], col = kidney$class, cex = 0.5)
+```
+
+### Split into train and testing datasets:
+
+```{r}
+set.seed(1234)
+ind <- sample(2, nrow(kidney), replace = TRUE, prob = c(0.8, 0.2))
+train <- kidney[ind == 1, ]
+test <- kidney[ind == 2, ]
+```
+
+### Build SVM model:
+
+```{r}
+library(e1071)  # need this to run svms
+svm_model <- svm(class ~., data = train)
+summary(svm_model)
+```
+
+
+```{r}
+library(caret)
+pred <- predict(svm_model, test)
+t <- table(pred, test$class)
+confusionMatrix(t)
+```
+
+help(svm)
+
+### Build a new model using a linear kernel:
+
+```{r}
+svm_model_linear <- svm(class ~., data = train, kernel = "linear")
+pred_linear <- predict(svm_model_linear, test)
+t_lin <- table(pred_linear, test$class)
+confusionMatrix(t_lin)
+```
+
+### Try again with a polynomial kernel:
+
+```{r}
+svm_model_poly <- svm(class ~ ., data = train, kernel = "polynomial")
+pred_poly <- predict(svm_model_poly, test)
+t_poly <- table(pred_poly, test$class)
+confusionMatrix(t_poly)
+```
+
+### Yet again with a radial kernel:
+
+```{r}
+svm_model_rad <- svm(class ~ ., data = train, kernel = "radial")
+pred_rad <- predict(svm_model_rad, test)
+t_rad <- table(pred_rad, test$class)
+confusionMatrix(t_rad)
+```
+
+### Yet again with a signmoid kernel:
+
+```{r}
+svm_model_sig <- svm(class ~ ., data = train, kernel = "sigmoid")
+pred_sig <- predict(svm_model_sig, test)
+t_sig <- table(pred_sig, test$class)
+confusionMatrix(t_sig)
+```
+
+### Parameter tuning for svm with polynomial kernel:
+
+```{r}
+svm_ply_tune <- tune.svm(class ~ ., 
+                         data = train, 
+                         kernel = "polynomial", 
+                         coef0 = (-1:4), 
+                         degree = (1:4))
+
+perf_summary <- summary(svm_ply_tune)
+
+# find the minimum error rate
+perf_summary$best.performance
+
+# visualize results:
+
+plot(svm_ply_tune, xlab="degree", ylab = "coef0")
+```
+
+### Build a final model using the tuned parameters:
+
+```{r}
+svm_model_final <- svm(class ~., 
+                       data = train, 
+                       kernel = "polynomial", 
+                       coef = 2, 
+                       degree = 3)
+
+pred_final <- predict(svm_model_final, test)
+t_final <- table(pred_final, test$class)
+confusionMatrix(t_final)
+
+0.88 - 0.8267
+```
+
+
+
